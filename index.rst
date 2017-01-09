@@ -47,7 +47,7 @@
 Overview
 ========
 
-The site `api.lsst.codes` is intended to be a unified front-end for API
+The site ``api.lsst.codes`` is intended to be a unified front-end for API
 services designed for programmatic consumption to support LSST/DM.  This
 technote will document how to use the tools that SQuaRE has provided to
 more easily write and deploy these API microservices.
@@ -79,14 +79,14 @@ Let's start with those.
 Required Metadata
 =================
 
-The metadata must be accessible at the routes `/metadata` and
-`/{{api_version}}/metadata` from the root of the microservice.  As of
-the time of writing, the current (and only) API version is `1.0`.
+The metadata must be accessible at the routes ``/metadata`` and
+``/{{api_version}}/metadata`` from the root of the microservice.  As of
+the time of writing, the current (and only) API version is ``1.0``.
 
 The metadata is also documented at `github_apikit`_.
 
 The metadata must be presented as a JSON object.  All fields except are
-type `str`. 
+type ``str``. 
 
 .. code-block:: json
 
@@ -99,41 +99,41 @@ type `str`.
 	auth
     }
 
-The fields `name`, `description`, and `version` are arbitrary.
-`semantic_versioning`_ is strongly encouraged for `version`.
-`api_version` should reflect the version of the API in use (at time of
-writing, `1.0`).  `repository` is the URL for the source of your
+The fields ``name``, ``description``, and ``version`` are arbitrary.
+`semantic_versioning`_ is strongly encouraged for ``version``.
+``api_version`` should reflect the version of the API in use (at time of
+writing, ``1.0``).  ``repository`` is the URL for the source of your
 project.  If you want your microservice to be published on
-`api.lsst.codes` its source must be publicly available.  We extremely
+``api.lsst.codes`` its source must be publicly available.  We extremely
 strongly recommend hosting it on Github.
 
-The `auth` field is constrained.  It must be one of `none`, `basic`, or
-`bitly-proxy`.  These represent the three choices available to the
-microservice for authentication to Github (we have standardized on
-Github as a canonical source of authentication data, since LSST is
-fairly fundamentally coupled to Github and it functions as a widely
-available OAuth2 provider):
+The ``auth`` field is constrained.  It must be one of ``none``,
+``basic``, or ``bitly-proxy``.  These represent the three choices
+available to the microservice for authentication to Github (we have
+standardized on Github as a canonical source of authentication data,
+since LSST is fairly fundamentally coupled to Github and it functions as
+a widely available OAuth2 provider):
 
- - `none`: no authentication required.
- - `basic`: HTTP Basic Auth.  Typically used with a Github username and
+ - ``none``: no authentication required.
+ - ``basic``: HTTP Basic Auth.  Typically used with a Github username and
    token, although if you didn't have two-factor authentication enabled
    at Github you could use a password here as well.
- - `bitly-proxy`: Authenticate through the Bitly OAuth2 proxy.
+ - ``bitly-proxy``: Authenticate through the Bitly OAuth2 proxy.
    Typically used with a Github username and password, and basically
    converts two-factor authentication back into username-and-password
    authentication.
 
 The good news is, if you're writing in Python and your application is a
 Flask app, you don't need to implement the metadata route.  Just use
-`apikit`. 
+``apikit``. 
 
 Using apikit
 ============
 
-The `apikit` module is documented at `_github_apikit`_, but basically:
+The ``apikit`` module is documented at `github_apikit`_, but basically:
 it provides one module, `apikit`, which has two classes,
 :class:`apikit.APIFlask` and :class:`apikit.BackendError` and two
-functions: `set_flask_metadata` and `add_metadata_route`.
+functions: ``set_flask_metadata()`` and ``add_metadata_route()``.
 
 The :class:`apikit.APIFlask` class is what you should generally use: it
 is a sublclass of a Flask application (:class:`flask.Flask`) which
@@ -141,11 +141,12 @@ already has metadata added and the route baked into it.
 
 If you have an existing Flask application, you might want to use
 `apikit.set_flask_metadata` on that application rather than the
-:class:`apikit.APIFlask` class.  You will find `add_route_prefix` useful
-to add additional routes to the metadata, which is useful, for instance,
-for Kubernetes Ingress resources, which provide routing but not path
-rewriting, so it's your responsibility to make sure the metadata is
-available at `/{{app_name}}/metadata` as well as `/metadata`.
+:class:`apikit.APIFlask` class.  You will find ``add_route_prefix()``
+useful to add additional routes to the metadata, which is useful, for
+instance, for Kubernetes Ingress resources, which provide routing but
+not path rewriting, so it's your responsibility to make sure the
+metadata is available at ``/{{app_name}}/metadata`` as well as
+``/metadata``.
 
 The :class:`apikit.BackendError` class is useful with Flask decorators
 to return diagnostic information when something goes wrong with your
@@ -154,20 +155,26 @@ application.  You'll see it in the example below.
 Example APIKit usage
 --------------------
 
+The following describes how you would use :class:`apikit.APIFlask` to
+create a service wrapper suitable for use on ``api.lsst.codes``.
+
+Microservice server
+^^^^^^^^^^^^^^^^^^^
+
 The :class:`apikit.APIFlask` class takes the same arguments as the
-object returned by metadata, with the following exception: `auth`
-becomes an object with two fields, `type`, and `data`, unless it is
-`None`, the empty string, or the string `none`.  The `type` field must
-be one of the strings `none`, `basic`, or `bitly-proxy`.
+object returned by metadata, with the following exception: ``auth``
+becomes an object with two fields, ``type`` and ``data``, unless it is
+``None``, the empty string, or the string ``none``.  The ``type`` field
+must be one of the strings ``none``, ``basic``, or ``bitly-proxy``.
 
-If `auth` is an object whose type field is `none`. `data` is the empty
-object.  Otherwise it is an object with two fields, `username` and
-`password`.  If `auth.type` is `bitly-proxy` then `data` must have a
-third field, `endpoint`, which is the `start` point of the OAuth2 proxy
-data flow for the underlying service.  Usually this is
-`https://service.host/oauth2/start`.
+If ``auth`` is an object whose type field is ``none``. ``data`` is the
+empty object.  Otherwise it is an object with two fields, ``username``
+and ``password``.  If ``auth.type`` is ``bitly-proxy`` then ``data``
+must have a third field, ``endpoint``, which is the ``start`` point of
+the OAuth2 proxy data flow for the underlying service.  Usually this is
+``https://service.host/oauth2/start``.
 
-The `api_version` field has a sane default (currently `1.0`) and can
+The ``api_version`` field has a sane default (currently ``1.0``) and can
 normally be omitted.
 
 Let's pretend that you have a service living at
@@ -175,8 +182,14 @@ https://myservice.lsst.codes, which you want to put an API wrapper
 around using apikit.  Your service uses the Bitly OAuth2 proxy to use
 the Github as its authentication source, so you need to leverage that.
 
-.. code-block:: python
+We'll say that this is going to go in a directory
+``uservice_mymicroservice``, and we will package it for installation via
+setuptools.  The server itself will, imaginatively, be called
+``server.py``.  Here are some fragments of it:
 
+.. code-block:: python
+   :name: get_application
+   
     import apikit
     from BitlyOAuth2ProxySession import Session
     
@@ -196,15 +209,16 @@ the Github as its authentication source, so you need to leverage that.
 
 
 This creates a Flask application which presents the service metadata on
-`/metadata`, `/v1.0/metadata`, `/mymicroservice/metadata`, and
-`/mymicroservice/v1.0/metadata/`, as well as all of those with `.json`
-appended.
+``/metadata``, ``/v1.0/metadata``, ``/mymicroservice/metadata``, and
+``/mymicroservice/v1.0/metadata/``, as well as all of those with
+``.json`` appended.
 
 Next we'll add a basic error handler.  Somewhere in your main method,
 after you've created the app:
 
 .. code-block:: python
-
+   :name: errorhandler
+   
     @app.errorhandler(apikit.BackendError)
     def handle_invalid_usage(error):
        """Custom error handler; bubble up status code, jsonify rest."""
@@ -219,8 +233,11 @@ And, because this is eventually going to run under GCE using an Ingress
 TLS terminator and router (well, this is our assumption, anyway), you
 want the actual application root to return a `200` very quickly, because
 the Ingress controller will be pinging it often to determine service
-health (GCE's Ingress defines a successful healthcheck as getting `200`
-from an `HTTP GET /`.
+health (GCE's Ingress defines a successful healthcheck as getting ``200``
+from an ``HTTP GET /``.
+
+.. code-block:: python
+   :name: healthcheck
 
     @app.route("/")
     def healthcheck():
@@ -235,45 +252,47 @@ Authentication headers, and you're going to use those as username and
 password to the proxy.
 
 You'll need a place to store the session.  Fortunately, Flask provides a
-mechanism for this: the app.config hash.
+mechanism for this: the ``app.config`` dict.
 
 So, after initialization, you probably want:
 
 .. code-block:: python
+   :name: session
 
     app.config["SESSION"] = None
 
-And then a _reauth method, so if an HTTP operation fails, you can try to
-regenerate a session with your authentication data:
+And then a ``_reauth()`` function, so if an HTTP operation fails, you
+can try to regenerate a session with your authentication data:
 
 .. code-block:: python
-
+   :name: reauth
+   
     def _reauth(app, username, password):
-    """Get a session with authentication data"""
-    oaep = app.config["AUTH"]["data"]["endpoint"]
-    # Session here comes from BitlyOAuth2Proxy
-    session = Session.Session(oauth2_username=username,
-                              oauth2_password=password,
-                              authentication_session_url=None,
-                              authentication_base_url=oaep)
-    session.authenticate()
-    app.config["SESSION"] = session
+        """Get a session with authentication data"""
+        oaep = app.config["AUTH"]["data"]["endpoint"]
+        # Session here comes from BitlyOAuth2Proxy
+        session = Session.Session(oauth2_username=username,
+                                  oauth2_password=password,
+                                  authentication_session_url=None,
+                                  authentication_base_url=oaep)
+        session.authenticate()
+        app.config["SESSION"] = session
 
 When we create the actual fetch of backend data, we'll see how to pull
 the headers off the request we got and create an authorization object
 for the session.
 
 So let's do that now.  Let's say you call this service with something
-like `GET /mymicroservice/jobname/metric` to retrieve the named metric
-about jobname (imagine you want to do `GET
-/mymicroservice/buildmyapp/time` to get back data about how long a build
-took).  We'll pretend that your backend service is extraordinarily
+like ``GET /mymicroservice/jobname/metric`` to retrieve the named metric
+about jobname (imagine you want to do ``GET
+/mymicroservice/buildmyapp/time`` to get back data about how long a
+build took).  We'll pretend that your backend service is extraordinarily
 ill-behaved, and conceptualizes services across metrics first and
 secondarily returns the metric as a plain text value, rather than in
-JSON or XML or anything sane.  You call it with `GET
-/api/metric/jobname` and what you get is what you get, which you hope is
-ASCII text, but it's not like the other side is going to guarantee that
-to you.
+JSON or XML or anything sane.  You call it with
+``GET /api?metric=metric&job=jobname`` and what you get is what you get,
+which you hope is ASCII text, or maybe UTF-8, but it's not like the
+other side is going to guarantee that to you.
 
 What you have decided to return to your caller is, of course, JSON, and
 you are going to return a structure that looks like:
@@ -288,6 +307,166 @@ you are going to return a structure that looks like:
 
 Where each of those fields are strings.
 
+Flask provides a nice decorator service for pointing routes to
+functions.  You've seen it above with the healthcheck route: just put
+``@app.route`` atop the function definition.
+
+.. code-block:: python
+   :name: route
+
+    from flask import jsonify, request
+    from apikit import BackendError
+
+    # Route it to the root too, in case we want to put it behind nginx 
+    #  or HAProxy or something that can do path rewriting.
+    @app.route("/<jobname>/<metric>")
+    @app.route("/mymicroservice/<jobname>/<metric>")
+    def get_metric_for_job(metric=None, jobname=None):
+        """Retrieve the metric and format it with JSON for return."""
+	# Create a custom error if metric or jobname are not specified
+	if metric is None or not metric or jobname is None or not jobname:
+            raise BackendError(reason="Bad calling parameters",
+                               status_code=500,
+                               content="Must specify metric and jobname.")
+	# If we have authorization on the request, try to use it
+        if request.authorization is not None:
+            inboundauth = request.authorization
+            currentuser = app.config["AUTH"]["data"]["username"]
+            currentpw = app.config["AUTH"]["data"]["password"]
+	    # If we are already using this user/pw, don't bother.
+            if currentuser != inboundauth.username or \
+               currentpw != inboundauth.password:
+                _reauth(app, inboundauth.username, inboundauth.password)
+        else:
+            raise BackendError(reason="Unauthorized", status_code=403,
+                               content="No authorization provided.")
+        session = app.config["SESSION"]
+	# This is going to end up in the same function where backenduri
+	#  is defined.  See below
+	url = backenduri + "/api"
+	params = { "metric": metric,
+	           "job": jobname }
+	resp = session.get(url, params=params)
+        if resp.status_code == 403:
+            # Try to reauth
+            _reauth(app, inboundauth.username, inboundauth.password)
+            session = app.config["SESSION"]
+            resp = session.get(url, params=params)
+	if resp.status_code == 200:
+            # Success!
+	    rdict = { "metric": metric,
+	              "jobname": jobname,
+		      "value": resp.text() }
+            return jsonify(rdict)	    
+        else:
+            raise BackendError(reason=resp.reason,
+                               status_code=resp.status_code,
+                               content=resp.text)
+		
+Some notes about this implementation: ``jsonify()`` not only returns the
+JSON representation of the dictionary passed to it, but wraps it in a
+``Response`` object with a mimetype of ``application/json`` and allows
+you to set an HTTP status code.
+
+We set a custom error if either metric or jobname are not specified.
+Most of the rest of the function is concerned with making sure you have
+a session object and attempting reauthorization if you get a ``403
+Forbidden`` on the initial request.
+
+And that's pretty much it.  You'd want to wrap all of the above in a
+function; let's call it ``server()`` and give it a ``run_standalone``
+parameter.  (Also, you'd want to move all your imports out and to the
+top). 
+
+.. code-block:: python
+   :name: server
+   
+    def server(run_standalone=False):
+        # Call to create application goes here... :ref:`get_application`
+	# Add your session... :ref:`session`
+	# ...and an error handler... :ref:`errorhandler`
+	# ...your healthcheck... :ref:`healthcheck`
+	# ...your actual route... :ref:`route`
+	# And then run it if invoked standalone:
+        if run_standalone:
+            app.run(host='0.0.0.0', threaded=True)
+
+The ``_reauth()`` function stands on its own, not nested inside
+``server()``.
+
+The only other thing you really need is to add a Python shebang and
+invoke ``server()`` standalone if the script is run from the
+command-line.  Making ``standalone()`` its own function makes
+``setup.py`` a bit prettier.
+
+.. code-block:: python
+
+    #!/usr/bin/env python
+    """My microservice wrapper."""
+    
+    # imports go here
+    # server function goes here: :ref:`server`
+    # reauth goes here: :ref:`reauth`
+
+    def standalone():
+        """Run standalone; makes setuptools invocation a little prettier."""
+        server(run_standalone=True)
+
+    if __name__ == "__main__":
+        standalone()
+
+
+Using setuptools
+^^^^^^^^^^^^^^^^
+
+You now want to make this server loadable as a module and then wrap it
+all up with ``setuptools``.  So, you'll need an ``__init__.py`` that
+exports the ``server()`` and ``standalone()`` symbols:
+
+.. code-block:: python
+
+    #!/usr/bin/env python
+    """My Microservice wrapper's __init__."""
+    from .server import server, standalone
+    __all__ = [ "server", "standalone" ]
+
+Then you need to go up a directory and make ``setup.py``.  There's good
+boilerplate for this, e.g. `in the metricdeviation microservice
+<https://github.com/lsst-sqre/uservice-metricdeviation/blob/master/setup.py>`_.
+
+Make sure to set any package dependencies:
+
+.. code-block:: python
+
+    install_requires=[
+        'sqre-apikit==0.0.10'
+    ],
+
+
+and the entrypoint:
+
+.. code-block:: python
+
+    entry_points={
+        'console_scripts': [
+            'sqre-uservice-mymicroservice = uservice_mymicroservice:standalone'
+        ]
+    }
+
+Further Considerations
+^^^^^^^^^^^^^^^^^^^^^^
+
+Your service will eventually be set up to run as a Docker container
+under GCE.  This will require population of a ``Dockerfile`` and
+deployment description files in ``kubernetes``.  However, those files
+are not in scope for this document, and, in general, are expected to be
+added by the DM/SQuaRE team.
+
+If you, as a service author, want to stop after making the service
+pip-installable with setuptools, that's perfectly fine.  SQuaRE will
+take it from there.
+
+That process will be detailed in a future tech note.
 
 
 .. note::
@@ -295,8 +474,11 @@ Where each of those fields are strings.
 
    **This technote is not yet published.**
 
-   A guide to writing microservices that will live behind api.lsst.codes and are intended for automated consumption
+   A guide to writing microservices that will live behind
+   ``api.lsst.codes`` and are intended for automated consumption 
 
 .. _github_apikit: https://github.com/lsst-sqre/sqre-apikit
+
 .. _sqre_apikit: https://pypi.python.org/pypi/sqre-apikit
+
 .. _semantic_versioning: http://semver.org
