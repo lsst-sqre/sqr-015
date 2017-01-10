@@ -238,8 +238,8 @@ So, after initialization, you probably want:
     app.config["SESSION"] = None
 
 Next you need a ``_reauth()`` function, so if an HTTP operation fails
-with a ``403 Forbidden``, you can try to regenerate a session with your
-authentication data:
+with a ``401 Unauthorized`` or ``403 Forbidden``, you can try to
+regenerate a session with your authentication data:
 
 .. code-block:: python
    :name: reauth
@@ -354,7 +354,7 @@ functions.  You've seen it above with the healthcheck route: just put
                currentpw != inboundauth.password:
                 _reauth(app, inboundauth.username, inboundauth.password)
         else:
-            raise BackendError(reason="Unauthorized", status_code=403,
+            raise BackendError(reason="Unauthorized", status_code=401,
                                content="No authorization provided.")
         session = app.config["SESSION"]
 	# This is going to end up in the same function where backenduri
@@ -363,7 +363,7 @@ functions.  You've seen it above with the healthcheck route: just put
 	params = { "metric": metric,
 	           "job": jobname }
 	resp = session.get(url, params=params)
-        if resp.status_code == 403:
+        if resp.status_code == 403 or resp.status_code == 401:
             # Try to reauth
             _reauth(app, inboundauth.username, inboundauth.password)
             session = app.config["SESSION"]
@@ -391,7 +391,7 @@ Some notes about this implementation:
 
 * Most of the rest of the function is concerned with making sure you
   have a session object and attempting reauthorization if you get a
-  ``403 Forbidden`` on the initial request.
+  ``401 Unauthorized`` or ``403 Forbidden`` on the initial request.
 
 And that's pretty much it.  You'd want to wrap all of the above in a
 function; let's call it ``server()`` and give it a ``run_standalone``
