@@ -74,10 +74,43 @@ Python 3 and Flask (if you're working in Python, it's nice if it works
 under Python 2 as well), and that you will use the `sqre_apikit`_ module
 (source at `github_apikit`_) to provide the required metadata routes.
 
-Let's start with those.
+However, there's also a Quick Start Guide if you don't really care *how*
+all this works, as long as it works.
+
+Quick Start Guide (i.e. tl;dr)
+==============================
+
+* Install ``cookiecutter``:
+
+.. code-block:: bash
+
+    pip install cookiecutter
+
+* Ensure that your locale settings are correct and that you're using
+  UTF-8.
+
+.. code-block:: bash
+
+    export LC_ALL=en_US.utf-8
+    export LANG=en_US.utf-8
+
+* Create a new microservice project.
+
+.. code-block:: bash
+
+    cookiecutter https://github.com/lsst-sqre/uservice-bootstrap.git
+
+* Follow the directions on your screen.
+
+
+How A Microservice Works
+========================
+
+What's actually going on in the project you just created?  Let's start
+with the metadata routes any `api.lsst.codes` application must provide.
 
 Required Metadata
-=================
+-----------------
 
 The metadata must be accessible at the routes ``/metadata`` and
 ``/{{api_version}}/metadata`` from the root of the microservice.  As of
@@ -128,7 +161,7 @@ Flask app, you don't need to implement the metadata route.  Just use
 ``apikit``. 
 
 Using apikit
-============
+------------
 
 The ``apikit`` module is documented at `github_apikit`_, but basically:
 it provides one module, `apikit`, which has two classes,
@@ -153,13 +186,13 @@ to return diagnostic information when something goes wrong with your
 application.  You'll see it in the example below.
 
 Example APIKit usage
---------------------
+^^^^^^^^^^^^^^^^^^^^
 
 The following describes how you would use :py:class:`apikit.APIFlask` to
 create a service wrapper suitable for use on ``api.lsst.codes``.
 
 Microservice server
-^^^^^^^^^^^^^^^^^^^
+@@@@@@@@@@@@@@@@@@@
 
 The :py:class:`apikit.APIFlask` class takes the same arguments as the
 object returned by metadata, with the following exception: ``auth``
@@ -440,7 +473,7 @@ command-line.  Making ``standalone()`` its own function makes
 
 
 Using setuptools
-^^^^^^^^^^^^^^^^
+----------------
 
 You now want to make this server loadable as a module and then wrap it
 all up with ``setuptools``.  So, you'll need an ``__init__.py`` that
@@ -477,13 +510,15 @@ and the entrypoint:
     }
 
 Further Considerations
-^^^^^^^^^^^^^^^^^^^^^^
+----------------------
 
 Your service will eventually be set up to run as a Docker container
 under GCE.  This will require population of a ``Dockerfile`` and
 deployment description files in ``kubernetes``.  However, those files
 are not in scope for this document, and, in general, are expected to be
-added by the DM/SQuaRE team.
+added by the DM/SQuaRE team.  (If you use ``cookiecutter`` you will
+already have these files, and they will be modified by the DM/SQuaRE
+team.)
 
 If you, as a service author, want to stop after making the service
 pip-installable with setuptools, that's perfectly fine.  SQuaRE will
