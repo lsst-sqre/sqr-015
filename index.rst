@@ -74,9 +74,9 @@ DM developers.
 
 This document assumes that you will write your microservice in Python 3
 and Flask (assuming you're working in Python, it's nice if it works
-under Python 2 as well), and that you will use the `apikit
-<sqre_apikit>`_ module (source at `GitHub <github_apikit>`_) to provide
-the required metadata routes.
+under Python 2 as well), and that you will use the `apikit`_ module
+(source at `GitHub`_) to provide the required metadata
+routes.
 
 However, there's also a Quick Start Guide if you don't really care *how*
 all this works, as long as it works.
@@ -86,23 +86,23 @@ Quick Start Guide (i.e. tl;dr)
 
 * Install ``cookiecutter``:
 
-.. code-block:: bash
+  .. code-block:: bash
 
-    pip install cookiecutter
+      pip install cookiecutter
 
 * Ensure that your locale settings are correct and that you're using
   UTF-8:
 
-.. code-block:: bash
+  .. code-block:: bash
 
-    export LC_ALL=en_US.utf-8
-    export LANG=en_US.utf-8
+      export LC_ALL=en_US.utf-8
+      export LANG=en_US.utf-8
 
 * Create a new microservice project:
 
-.. code-block:: bash
+  .. code-block:: bash
 
-    cookiecutter https://github.com/lsst-sqre/uservice-bootstrap.git
+      cookiecutter https://github.com/lsst-sqre/uservice-bootstrap.git
 
 * Follow the directions on your screen.
 
@@ -126,7 +126,7 @@ The metadata must be accessible at the routes ``/metadata`` and
 ``/{{api_version}}/metadata`` from the root of the microservice.  As of
 the time of writing, the current (and only) API version is ``1.0``.
 
-The metadata is also documented at `github_apikit`_.
+The metadata is also documented at `GitHub`_.
 
 The metadata must be presented as a JSON object.  All fields are
 type ``str``. 
@@ -143,7 +143,7 @@ type ``str``.
     }
 
 The fields ``name``, ``description``, and ``version`` are arbitrary.
-`semantic_versioning`_ is strongly encouraged for ``version``.
+`Semantic versioning`_ is strongly encouraged for ``version``.
 ``api_version`` should reflect the version of the API in use (at time of
 writing, ``1.0``).  ``repository`` is the URL for the source of your
 project.  If you want your microservice to be published on
@@ -173,7 +173,7 @@ metadata route.  Just use ``apikit``.
 Using apikit
 ------------
 
-The ``apikit`` module is documented at `github_apikit`_.  ``apikit`` has
+The ``apikit`` module is documented at `GitHub`_.  ``apikit`` has
 two classes: :py:class:`apikit.APIFlask` and
 :py:class:`apikit.BackendError`, and two functions:
 ``set_flask_metadata()`` and ``add_metadata_route()``.
@@ -202,8 +202,8 @@ The following describes how you would use ``apikit`` and specifically
 :py:class:`apikit.APIFlask` to create a service wrapper suitable for use
 on ``api.lsst.codes``.
 
-Microservice server
-@@@@@@@@@@@@@@@@@@@
+Microservice server overview
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 Let's pretend that you have a service living at
 https://myservice.lsst.codes, which you want to turn into a microservice
@@ -215,7 +215,12 @@ We'll say that this is going to go in a directory
 ``uservice_mymicroservice``, and we will package it for installation via
 ``setuptools``.  The server itself will, imaginatively, be called
 ``server.py``.  (This mirrors the setup you would get if you used
-``cookiecutter`` to create the service.)  We'll cheat a little and start
+``cookiecutter`` to create the service.)
+
+Imports
+@@@@@@@
+
+We'll cheat a little and start
 with all the imports we're going to need; in real development, of
 course, you wouldn't know this *a priori* but would build it up a bit at
 a time:
@@ -226,6 +231,9 @@ a time:
     from flask import jsonify, request
     from apikit import APIFlask, BackendError
     from BitlyOAuth2ProxySession import Session
+
+Flask application
+@@@@@@@@@@@@@@@@@
 
 Having done that, we need to create the microservice as an instance of
 :py:class:`apikit.APIFlask`.  This class takes the same arguments as the
@@ -269,6 +277,9 @@ This creates a Flask application which presents the service metadata on
 ``/mymicroservice/v1.0/metadata/``, as well as all of those with
 ``.json`` appended.
 
+Session object
+@@@@@@@@@@@@@@
+
 Now, in order to actually access your data, you're going to need to make
 your requests within a session with the appropriate authentication.
 Let's assume that your caller is going to send you HTTP Basic
@@ -284,6 +295,9 @@ So, after initialization, you probably want:
    :name: session
 
     app.config["SESSION"] = None
+
+Reauthorization
+@@@@@@@@@@@@@@@
 
 Next you need a ``_reauth()`` function, so if an HTTP operation fails
 with a ``401 Unauthorized`` or ``403 Forbidden``, you can try to
@@ -307,6 +321,9 @@ When we create the actual fetch of backend data, we'll see how to pull
 the headers off the request we got and create an authorization object
 for the session.
 
+Error handler
+@@@@@@@@@@@@@
+
 Next we'll add a basic error handler:
 
 .. code-block:: python
@@ -321,6 +338,9 @@ Next we'll add a basic error handler:
 
 Now, whenever you want to return an error based on something you got
 from the service, create a new :py:class:`apikit.BackendError`.
+
+Healthcheck
+@@@@@@@@@@@
 
 Since this application is eventually going to run under Google Container
 Engine using an Ingress TLS terminator and router (well, this is our
@@ -338,15 +358,24 @@ healthcheck as getting ``200`` from an ``HTTP GET /``.
         """Default route to keep Ingress controller happy."""
         return "OK"
 
+Service logic
+@@@@@@@@@@@@@
+
 Finally, let's add the actual service.  In addition to the routing and
 fetching logic, you will need to peel the authentication headers out of
 the inbound request and create a session with them, if you don't already
 have a session with the correct authentication information.
 
+Interface
+"""""""""
+
 Let's say you have decided that your microservice interface will respond
 to ``GET /mymicroservice/jobname/metric`` to retrieve the named metric about
 jobname (for instance, ``GET /mymicroservice/buildmyapp/time``
 to get back data about how long a build took).
+
+Backend
+"""""""
 
 We'll pretend that your backend service is ill-behaved, and does the
 following annoying things:
@@ -361,6 +390,9 @@ Therefore, you call it with ``GET /api?metric=metric&job=jobname`` and
 what you get is what you get, which you hope is ASCII text, or maybe
 UTF-8, but it's not like the other side is going to guarantee that to you.
 
+Return value
+""""""""""""
+
 What you have decided to return to your caller is, of course, JSON, and
 you are going to return a structure that looks like:
 
@@ -373,6 +405,9 @@ you are going to return a structure that looks like:
     }
 
 Where each of those fields are strings.
+
+Service route and implementation
+""""""""""""""""""""""""""""""""
 
 Flask provides a nice decorator service for pointing routes to
 functions.  You've seen it above with the healthcheck route: just put
@@ -428,7 +463,8 @@ functions.  You've seen it above with the healthcheck route: just put
                                status_code=resp.status_code,
                                content=resp.text)
 
-Some notes about this implementation:
+Implementation notes
+""""""""""""""""""""
 
 * ``jsonify()`` not only returns the JSON representation of the
   dictionary passed to it, but wraps it in a ``Response`` object with a
@@ -445,6 +481,9 @@ Some notes about this implementation:
 And that's pretty much it.  You'd want to wrap all of the above in a
 function; let's call it ``server()`` and give it a ``run_standalone``
 parameter.
+
+Server function
+@@@@@@@@@@@@@@@
 
 .. code-block:: python
    :name: server
@@ -466,6 +505,9 @@ parameter.
 The imports go at the top of ``server.py``, of course, and the
 ``_reauth()`` function stands on its own, not nested inside ``server()``.
 
+Standalone invocation
+@@@@@@@@@@@@@@@@@@@@@
+
 The only other thing you really need is to add a Python shebang and
 invoke ``server()`` standalone if the script is run from the
 command-line.  Making ``standalone()`` its own function makes
@@ -476,13 +518,14 @@ command-line.  Making ``standalone()`` its own function makes
     #!/usr/bin/env python
     """My microservice wrapper."""
     
-    # imports go here
-    # server function goes here: :ref:`server`
-    # reauth goes here: :ref:`reauth`
+    # Imports go here...
+    # ...server function goes here...
+    # ...reauth goes here.
 
     def standalone():
         """Run standalone; makes setuptools invocation a little prettier."""
         server(run_standalone=True)
+
 
     if __name__ == "__main__":
         standalone()
@@ -543,16 +586,8 @@ take it from there.
 That process will be detailed in a future tech note.
 
 
-.. note::
+.. _GitHub: https://github.com/lsst-sqre/sqre-apikit
 
+.. _apikit: https://pypi.python.org/pypi/sqre-apikit
 
-   **This technote is not yet published.**
-
-   A guide to writing microservices that will live behind
-   ``api.lsst.codes`` and are intended for automated consumption 
-
-.. _github_apikit: https://github.com/lsst-sqre/sqre-apikit
-
-.. _sqre_apikit: https://pypi.python.org/pypi/sqre-apikit
-
-.. _semantic_versioning: http://semver.org
+.. _Semantic versioning: http://semver.org
